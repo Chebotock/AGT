@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role       { SUPERADMIN ORGANIZER }
+enum GameStatus { DRAFT ACTIVE FINISHED }
+enum ScoringType { BY_TIME BY_TIPS MIXED }
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(ORGANIZER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  games        Game[]
+  @@map("users")
+}
+
+model Game {
+  id                 String      @id @default(cuid())
+  title              String
+  description        String?
+  status             GameStatus  @default(DRAFT)
+  scoringType        ScoringType @default(BY_TIME) @map("scoring_type")
+  wrongAnswerPenalty Int         @default(600) @map("wrong_answer_penalty")
+  maxTeams           Int?        @map("max_teams")
+  joinCode           String      @unique @map("join_code")
+  startedAt          DateTime?   @map("started_at")
+  finishedAt         DateTime?   @map("finished_at")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  createdBy          User        @relation(fields: [createdById], references: [id])
+  createdById        String      @map("created_by_id")
+  problems           Problem[]
+  teams              Team[]
+  @@map("games")
+}
+
+model Problem {
+  id         String          @id @default(cuid())
+  gameId     String          @map("game_id")
+  orderNum   Int             @map("order_num")
+  text       String
+  timeLimit  Int?            @map("time_limit")
+  createdAt  DateTime        @default(now()) @map("created_at")
+  game       Game            @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  answers    ProblemAnswer[]
+  tips       Tip[]
+  answerLogs AnswerLog[]
+  @@unique([gameId, orderNum])
+  @@map("problems")
+}
+
+model ProblemAnswer {
+  id         String  @id @default(cuid())
+  problemId  String  @map("problem_id")
+  answerText String  @map("answer_text")
+  problem    Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  @@map("problem_answers")
+}
+
+model Tip {
+  id             String    @id @default(cuid())
+  problemId      String    @map("problem_id")
+  type           Int
+  text           String
+  delaySeconds   Int       @map("delay_seconds")
+  penaltySeconds Int       @map("penalty_seconds")
+  problem        Problem   @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  usedTips       UsedTip[]
+  @@unique([problemId, type])
+  @@map("tips")
+}
+
+model Team {
+  id         String       @id @default(cuid())
+  gameId     String       @map("game_id")
+  name       String
+  tokenHash  String       @map("token_hash")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  game       Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  members    TeamMember[]
+  answerLogs AnswerLog[]
+  usedTips   UsedTip[]
+  @@unique([gameId, name])
+  @@map("teams")
+}
+
+model TeamMember {
+  id       String @id @default(cuid())
+  teamId   String @map("team_id")
+  nickname String
+  team     Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  @@map("team_members")
+}
+
+model AnswerLog {
+  id            String   @id @default(cuid())
+  teamId        String   @map("team_id")
+  problemId     String   @map("problem_id")
+  submittedText String   @map("submitted_text")
+  isCorrect     Boolean  @map("is_correct")
+  submittedAt   DateTime @default(now()) @map("submitted_at")
+  team          Team     @relation(fields: [teamId], references: [id])
+  problem       Problem  @relation(fields: [problemId], references: [id])
+  @@map("answer_logs")
+}
+
+model UsedTip {
+  id            String   @id @default(cuid())
+  teamId        String   @map("team_id")
+  tipId         String   @map("tip_id")
+  usedAtSeconds Int      @map("used_at_seconds")
+  createdAt     DateTime @default(now()) @map("created_at")
+  team          Team     @relation(fields: [teamId], references: [id])
+  tip           Tip      @relation(fields: [tipId], references: [id])
+  @@unique([teamId, tipId])
+  @@map("used_tips")
+}

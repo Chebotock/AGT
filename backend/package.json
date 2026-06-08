@@ -1,5 +1,5 @@
 {
-  "name": "project911-backend",
+  "name": "agt-911-backend",
   "version": "1.0.0",
   "scripts": {
     "dev": "tsx watch src/index.ts",

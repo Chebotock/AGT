@@ -1,6 +1,7 @@
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -31,6 +32,16 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   games        Game[]
   @@map("users")
+}
+
+model Captain {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  nickname     String
+  createdAt    DateTime @default(now()) @map("created_at")
+  teams        Team[]
+  @@map("captains")
 }
 
 model Game {
@@ -89,16 +100,20 @@ model Tip {
 }
 
 model Team {
-  id         String       @id @default(cuid())
-  gameId     String       @map("game_id")
-  name       String
-  tokenHash  String       @map("token_hash")
-  createdAt  DateTime     @default(now()) @map("created_at")
-  game       Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  members    TeamMember[]
-  answerLogs AnswerLog[]
-  usedTips   UsedTip[]
+  id          String       @id @default(cuid())
+  gameId      String       @map("game_id")
+  name        String
+  captainId   String       @map("captain_id")
+  tokenHash   String       @map("token_hash")
+  joinMethod  String       @default("code") @map("join_method")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  game        Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  captain     Captain      @relation(fields: [captainId], references: [id])
+  members     TeamMember[]
+  answerLogs  AnswerLog[]
+  usedTips    UsedTip[]
   @@unique([gameId, name])
+  @@unique([gameId, captainId])
   @@map("teams")
 }
 

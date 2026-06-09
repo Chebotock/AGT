@@ -1,1 +1,1 @@
-// TODO: game service
+export {}

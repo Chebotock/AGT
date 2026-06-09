@@ -1,19 +1,15 @@
-import { FastifyInstance } from 'fastify'
-import { authRoutes }     from './auth'
-import { gamesRoutes }    from './games'
-import { problemsRoutes } from './problems'
-import { tipsRoutes }     from './tips'
-import { teamRoutes }     from './team'
-import { resultsRoutes }  from './results'
+import Fastify from 'fastify'
+import { registerPlugins } from './config/plugins'
+import { registerRoutes } from './routes/index'
 
-export async function registerRoutes(app: FastifyInstance) {
-  // Health check — без префикса
-  app.get('/health', async () => ({ status: 'ok', project: 'AGT-911' }))
+const app = Fastify({ logger: { level: 'info' } })
 
-  app.register(authRoutes,     { prefix: '/auth' })
-  app.register(gamesRoutes,    { prefix: '/games' })
-  app.register(problemsRoutes, { prefix: '/problems' })
-  app.register(tipsRoutes,     { prefix: '/tips' })
-  app.register(teamRoutes,     { prefix: '/team' })
-  app.register(resultsRoutes,  { prefix: '/results' })
+async function start() {
+  await registerPlugins(app)
+  await registerRoutes(app)
+  const port = Number(process.env.PORT) || 3000
+  await app.listen({ port, host: '0.0.0.0' })
+  console.log(`AGT-911 backend running on port ${port}`)
 }
+
+start().catch((err) => { console.error(err); process.exit(1) })

@@ -67,12 +67,14 @@ export default function AdminGameEdit() {
     } catch { alert('Ошибка') } finally { setSaving(false) }
   }
 
-  async function addTip(problemId: string) {
+  async function addTip(problemId: string, problem: Problem) {
     if (!tipText.trim()) return
     setSavingTip(true)
+    const available = [1,2,3].filter(t => !problem.tips.find(tip => tip.type === t))
+    const actualType = available.includes(tipType) ? tipType : available[0]
     try {
       await api.post(`/problems/${problemId}/tips`, {
-        type: tipType,
+        type: actualType,
         text: tipText,
         delaySeconds: tipDelay,
         penaltySeconds: tipPenalty,
@@ -238,11 +240,7 @@ export default function AdminGameEdit() {
                     <div className="text-xs text-agt-muted uppercase tracking-wider">Подсказки</div>
                     {game.status === 'DRAFT' && problem.tips.length < 3 && (
                       <button
-                        onClick={() => {
-                          const availableTypes = [1,2,3].filter(t => !problem.tips.find(tip => tip.type === t))
-                          setTipType(availableTypes[0] || 1)
-                          setAddingTipFor(addingTipFor === problem.id ? null : problem.id)
-                        }}
+                        onClick={() => setAddingTipFor(addingTipFor === problem.id ? null : problem.id)}
                         className="text-xs text-agt-blue hover:text-agt-orange">
                         + Добавить подсказку
                       </button>
@@ -317,7 +315,7 @@ export default function AdminGameEdit() {
                       </div>
                       <div className="flex gap-2">
                         <button className="btn-primary text-xs py-1.5 px-3"
-                          onClick={() => addTip(problem.id)} disabled={savingTip}>
+                          onClick={() => addTip(problem.id, problem)} disabled={savingTip}>
                           {savingTip ? '...' : 'Сохранить'}
                         </button>
                         <button className="btn-secondary text-xs py-1.5 px-3"

@@ -135,7 +135,7 @@ export default function AdminDashboard() {
                     {game.status === 'ACTIVE' && <>
                       <button onClick={() => navigate(`/agt/adm/dashboard/${game.id}`)}
                         className="btn-secondary text-xs px-3 py-1.5">📊 Дашборд</button>
-                      <button onClick={() => navigate(`/agt/adm/games/${game.id}`)}
+                      <button onClick={() => navigate(`/agt/adm/dashboard/${game.id}`)}
                         className="btn-secondary text-xs px-3 py-1.5">Игра</button>
                       <button onClick={() => stopGame(game.id)}
                         className="btn-danger text-xs px-3 py-1.5">■ Стоп</button>

@@ -6,12 +6,9 @@ const SALT_ROUNDS = 12
 
 export class AuthService {
 
-  // ─── Организатор ───────────────────────────────────────────
-
   async registerOrganizer({ email, password }: { email: string; password: string }) {
     const exists = await prisma.user.findUnique({ where: { email } })
     if (exists) throw new Error('Email already registered')
-
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
     const user = await prisma.user.create({
       data: { email, passwordHash, role: 'ORGANIZER' }
@@ -22,10 +19,8 @@ export class AuthService {
   async loginOrganizer({ email, password }: { email: string; password: string }) {
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) throw new Error('Invalid email or password')
-
     const valid = await bcrypt.compare(password, user.passwordHash)
     if (!valid) throw new Error('Invalid email or password')
-
     return this._issueOrganizerTokens(user.id, user.role)
   }
 
@@ -50,45 +45,46 @@ export class AuthService {
     return { accessToken, refreshToken }
   }
 
-  // ─── Капитан ───────────────────────────────────────────────
-
   async registerCaptain({ email, password, nickname }: { email: string; password: string; nickname: string }) {
     const exists = await prisma.captain.findUnique({ where: { email } })
     if (exists) throw new Error('Email already registered')
-
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
     const captain = await prisma.captain.create({
       data: { email, passwordHash, nickname }
     })
-    return this._issueCaptainToken(captain.id)
+    return this._issueCaptainToken(captain.id, null)
   }
 
   async loginCaptain({ email, password }: { email: string; password: string }) {
     const captain = await prisma.captain.findUnique({ where: { email } })
     if (!captain) throw new Error('Invalid email or password')
-
     const valid = await bcrypt.compare(password, captain.passwordHash)
     if (!valid) throw new Error('Invalid email or password')
 
-    return this._issueCaptainToken(captain.id)
+    // Найти активную команду
+    const team = await prisma.team.findFirst({
+      where: { captainId: captain.id },
+      include: { game: true },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    const teamId = team ? team.id : null
+    return this._issueCaptainToken(captain.id, teamId)
   }
 
   async joinGame({ gameCode, teamName, captainToken }: { gameCode: string; teamName: string; captainToken: string }) {
     const payload = jwt.verify(captainToken, process.env.JWT_SECRET!) as any
     const captainId = payload.sub
 
-    // Найти игру по коду
     const game = await prisma.game.findUnique({ where: { joinCode: gameCode } })
     if (!game) throw new Error('Game not found')
     if (game.status === 'FINISHED') throw new Error('Game already finished')
 
-    // Проверить что капитан ещё не в игре
     const existing = await prisma.team.findFirst({
       where: { gameId: game.id, captainId }
     })
     if (existing) throw new Error('Already joined this game')
 
-    // Создать команду
     const team = await prisma.team.create({
       data: {
         gameId: game.id,
@@ -99,7 +95,15 @@ export class AuthService {
       }
     })
 
+    // Выдать новый токен с teamId
+    const newToken = jwt.sign(
+      { sub: captainId, teamId: team.id, role: 'captain', type: 'captain' },
+      process.env.JWT_SECRET!,
+      { expiresIn: '30d' }
+    )
+
     return {
+      accessToken: newToken,
       teamId: team.id,
       teamName: team.name,
       gameId: game.id,
@@ -113,7 +117,6 @@ export class AuthService {
     const captain = await prisma.captain.findUnique({ where: { id: payload.sub } })
     if (!captain) throw new Error('Captain not found')
 
-    // Найти активную команду капитана
     const team = await prisma.team.findFirst({
       where: { captainId: captain.id },
       include: { game: true },
@@ -148,7 +151,6 @@ export class AuthService {
   async joinAsMember(inviteToken: string) {
     const payload = jwt.verify(inviteToken, process.env.JWT_SECRET!) as any
     if (payload.type !== 'invite') throw new Error('Invalid invite')
-
     const memberToken = jwt.sign(
       { teamId: payload.teamId, role: 'member', type: 'member' },
       process.env.JWT_SECRET!,
@@ -157,9 +159,9 @@ export class AuthService {
     return { memberToken }
   }
 
-  private _issueCaptainToken(captainId: string) {
+  private _issueCaptainToken(captainId: string, teamId: string | null) {
     const accessToken = jwt.sign(
-      { sub: captainId, role: 'captain', type: 'captain' },
+      { sub: captainId, teamId, role: 'captain', type: 'captain' },
       process.env.JWT_SECRET!,
       { expiresIn: '30d' }
     )

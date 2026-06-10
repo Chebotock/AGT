@@ -238,7 +238,11 @@ export default function AdminGameEdit() {
                     <div className="text-xs text-agt-muted uppercase tracking-wider">Подсказки</div>
                     {game.status === 'DRAFT' && problem.tips.length < 3 && (
                       <button
-                        onClick={() => setAddingTipFor(addingTipFor === problem.id ? null : problem.id)}
+                        onClick={() => {
+                          const availableTypes = [1,2,3].filter(t => !problem.tips.find(tip => tip.type === t))
+                          setTipType(availableTypes[0] || 1)
+                          setAddingTipFor(addingTipFor === problem.id ? null : problem.id)
+                        }}
                         className="text-xs text-agt-blue hover:text-agt-orange">
                         + Добавить подсказку
                       </button>

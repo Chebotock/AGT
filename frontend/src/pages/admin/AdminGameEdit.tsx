@@ -70,20 +70,24 @@ export default function AdminGameEdit() {
   async function addTip(problemId: string, problem: Problem) {
     if (!tipText.trim()) return
     setSavingTip(true)
-    const available = [1,2,3].filter(t => !problem.tips.find(tip => tip.type === t))
-    const actualType = available.includes(tipType) ? tipType : available[0]
+    // Берём свежие данные из game state
+    const freshProblem = game?.problems.find(p => p.id === problemId)
+    const available = [1,2,3].filter(t => !freshProblem?.tips.find(tip => tip.type === t))
+    const typeToUse = available[0]
+    console.log("available types:", available, "using:", typeToUse)
+    if (!typeToUse) { alert('Все подсказки уже добавлены'); setSavingTip(false); return }
     try {
       await api.post(`/problems/${problemId}/tips`, {
-        type: actualType,
+        type: typeToUse,
         text: tipText,
         delaySeconds: tipDelay,
         penaltySeconds: tipPenalty,
       })
-      setTipText(''); setTipType(1); setTipDelay(900); setTipPenalty(600)
+      setTipText(''); setTipDelay(900); setTipPenalty(600)
       setAddingTipFor(null)
       loadGame()
     } catch (e: any) {
-      alert(e?.error || 'Ошибка добавления подсказки')
+      alert(e?.error || 'Ошибка: ' + JSON.stringify(e))
     } finally { setSavingTip(false) }
   }
 

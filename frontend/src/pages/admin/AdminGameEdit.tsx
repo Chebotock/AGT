@@ -74,7 +74,6 @@ export default function AdminGameEdit() {
     const freshProblem = game?.problems.find(p => p.id === problemId)
     const available = [1,2,3].filter(t => !freshProblem?.tips.find(tip => tip.type === t))
     const typeToUse = available[0]
-    console.log("available types:", available, "using:", typeToUse)
     if (!typeToUse) { alert('Все подсказки уже добавлены'); setSavingTip(false); return }
     try {
       await api.post(`/problems/${problemId}/tips`, {

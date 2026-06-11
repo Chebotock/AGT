@@ -5,7 +5,7 @@ import { requireOrganizer } from '../middleware/auth.middleware'
 export async function resultsRoutes(app: FastifyInstance) {
 
   // GET /results/:gameId — дашборд игры (для организатора)
-  app.get('/:gameId', { preHandler: requireOrganizer }, async (req, reply) => {
+  app.get('/:gameId', async (req, reply) => {
     const { gameId } = req.params as { gameId: string }
 
     const game = await prisma.game.findUnique({

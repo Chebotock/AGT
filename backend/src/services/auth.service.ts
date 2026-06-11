@@ -35,7 +35,7 @@ export class AuthService {
     const accessToken = jwt.sign(
       { sub: userId, role, type: 'organizer' },
       process.env.JWT_SECRET!,
-      { expiresIn: '15m' }
+      { expiresIn: '24h' }
     )
     const refreshToken = jwt.sign(
       { sub: userId, type: 'refresh' },

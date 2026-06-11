@@ -90,6 +90,32 @@ export async function authRoutes(app: FastifyInstance) {
     } catch (e: any) { reply.status(400).send({ error: e.message }) }
   })
 
+  // POST /auth/refresh — обновить access_token через refresh_token
+  app.post('/refresh', async (req, reply) => {
+    const refreshToken = req.cookies['refresh_token']
+    if (!refreshToken) return reply.status(401).send({ error: 'No refresh token' })
+    try {
+      const jwt = require('jsonwebtoken')
+      const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as any
+      if (payload.type !== 'refresh') return reply.status(401).send({ error: 'Invalid token' })
+      
+      const { prisma } = require('../config/prisma')
+      const user = await prisma.user.findUnique({ where: { id: payload.sub } })
+      if (!user) return reply.status(401).send({ error: 'User not found' })
+
+      const newAccessToken = jwt.sign(
+        { sub: user.id, role: user.role, type: 'organizer' },
+        process.env.JWT_SECRET!,
+        { expiresIn: '24h' }
+      )
+      reply
+        .setCookie('access_token', newAccessToken, { ...cookieOpts, maxAge: 60 * 60 * 24 })
+        .send({ ok: true })
+    } catch {
+      reply.status(401).send({ error: 'Invalid refresh token' })
+    }
+  })
+
   app.get('/team/me', async (req, reply) => {
     const token = req.cookies['captain_token']
     if (!token) return reply.status(401).send({ error: 'Unauthorized' })

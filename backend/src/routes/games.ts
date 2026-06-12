@@ -33,6 +33,9 @@ export async function gamesRoutes(app: FastifyInstance) {
       wrongAnswerPenalty: z.number().default(600),
       maxTeams: z.number().optional(),
       scoringType: z.enum(['BY_TIME', 'BY_TIPS', 'MIXED']).default('BY_TIME'),
+      timezone: z.string().optional(),
+      scheduledAt: z.string().optional(),
+      scheduledAt: z.string().optional(),
     })
     const body = schema.safeParse(req.body)
     if (!body.success) return reply.status(400).send({ error: 'Invalid input' })
@@ -47,7 +50,10 @@ export async function gamesRoutes(app: FastifyInstance) {
         wrongAnswerPenalty: body.data.wrongAnswerPenalty,
         maxTeams: body.data.maxTeams,
         scoringType: body.data.scoringType,
+        scheduledAt: body.data.scheduledAt ? new Date(body.data.scheduledAt) : null,
         joinCode,
+        timezone: body.data.timezone,
+        scheduledAt: body.data.scheduledAt ? new Date(body.data.scheduledAt) : null,
         createdById: user.sub,
       }
     })
@@ -82,13 +88,18 @@ export async function gamesRoutes(app: FastifyInstance) {
       description: z.string().optional(),
       wrongAnswerPenalty: z.number().optional(),
       maxTeams: z.number().optional(),
+      scheduledAt: z.string().optional().nullable(),
     })
     const body = schema.safeParse(req.body)
     if (!body.success) return reply.status(400).send({ error: 'Invalid input' })
 
+    const { scheduledAt, ...rest } = body.data
     const game = await prisma.game.updateMany({
       where: { id, createdById: user.sub },
-      data: body.data
+      data: {
+        ...rest,
+        scheduledAt: scheduledAt === null ? null : scheduledAt ? new Date(scheduledAt) : undefined,
+      }
     })
     if (!game.count) return reply.status(404).send({ error: 'Game not found' })
     reply.send({ ok: true })

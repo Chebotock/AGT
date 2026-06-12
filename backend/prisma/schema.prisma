@@ -53,6 +53,8 @@ model Game {
   wrongAnswerPenalty Int         @default(600) @map("wrong_answer_penalty")
   maxTeams           Int?        @map("max_teams")
   joinCode           String      @unique @map("join_code")
+  timezone           String      @default("Europe/Moscow") @map("timezone")
+  scheduledAt        DateTime?   @map("scheduled_at")
   startedAt          DateTime?   @map("started_at")
   finishedAt         DateTime?   @map("finished_at")
   createdAt          DateTime    @default(now()) @map("created_at")

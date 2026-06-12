@@ -5,6 +5,7 @@ import AdminDashboard     from './pages/admin/AdminDashboard'
 import AdminGames         from './pages/admin/AdminGames'
 import AdminGameEdit      from './pages/admin/AdminGameEdit'
 import AdminGameDashboard from './pages/admin/AdminGameDashboard'
+import AdminProfile       from './pages/admin/AdminProfile'
 import Lobby              from './pages/team/Lobby'
 import TeamGame           from './pages/team/TeamGame'
 import TeamResults        from './pages/team/TeamResults'
@@ -24,6 +25,7 @@ export default function App() {
       <Route path="/agt/adm/dashboard/:id"      element={<AdminGameDashboard />} />
       <Route path="/agt/adm/games"              element={<AdminGames />} />
       <Route path="/agt/adm/games/:id"          element={<AdminGameEdit />} />
+      <Route path="/agt/adm/profile"            element={<AdminProfile />} />
 
       <Route path="/"  element={<Navigate to="/agt" replace />} />
       <Route path="*"  element={<Navigate to="/agt" replace />} />

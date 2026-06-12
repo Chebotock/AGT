@@ -74,8 +74,12 @@ export default function AdminDashboard() {
           <span className="text-xl font-extrabold text-agt-blue tracking-widest">AGT</span>
           <span className="text-xs font-bold text-agt-red tracking-widest">PROJECT 911</span>
         </div>
-        <button onClick={() => { api.post('/auth/logout', {}); navigate('/agt/adm') }}
-          className="text-xs text-agt-muted hover:text-agt-text">Выйти</button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate('/agt/adm/profile')}
+            className="text-xs text-agt-muted hover:text-agt-text">⚙ Профиль</button>
+          <button onClick={() => { api.post('/auth/logout', {}); navigate('/agt/adm') }}
+            className="text-xs text-agt-muted hover:text-agt-text">Выйти</button>
+        </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
@@ -135,7 +139,7 @@ export default function AdminDashboard() {
                     {game.status === 'ACTIVE' && <>
                       <button onClick={() => navigate(`/agt/adm/dashboard/${game.id}`)}
                         className="btn-secondary text-xs px-3 py-1.5">📊 Дашборд</button>
-                      <button onClick={() => navigate(`/agt/adm/dashboard/${game.id}`)}
+                      <button onClick={() => navigate(`/agt/adm/games/${game.id}`)}
                         className="btn-secondary text-xs px-3 py-1.5">Игра</button>
                       <button onClick={() => stopGame(game.id)}
                         className="btn-danger text-xs px-3 py-1.5">■ Стоп</button>

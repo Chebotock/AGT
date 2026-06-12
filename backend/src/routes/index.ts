@@ -5,15 +5,15 @@ import { problemsRoutes } from './problems'
 import { tipsRoutes }     from './tips'
 import { teamRoutes }     from './team'
 import { resultsRoutes }  from './results'
+import { profileRoutes }  from './profile'
 
 export async function registerRoutes(app: FastifyInstance) {
-  // Health check — без префикса
   app.get('/health', async () => ({ status: 'ok', project: 'AGT-911' }))
-
   app.register(authRoutes,     { prefix: '/auth' })
   app.register(gamesRoutes,    { prefix: '/games' })
   app.register(problemsRoutes, { prefix: '/problems' })
   app.register(tipsRoutes,     { prefix: '/tips' })
   app.register(teamRoutes,     { prefix: '/team' })
   app.register(resultsRoutes,  { prefix: '/results' })
+  app.register(profileRoutes,  { prefix: '/profile' })
 }

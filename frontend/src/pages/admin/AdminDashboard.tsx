@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../api/client'
+import { formatInTimezone } from '../../utils/timezones'
 
 interface Game {
   id: string
@@ -8,6 +9,8 @@ interface Game {
   status: 'DRAFT' | 'ACTIVE' | 'FINISHED'
   joinCode: string
   createdAt: string
+  scheduledAt: string | null
+  timezone: string
   _count: { teams: number; problems: number }
 }
 
@@ -18,6 +21,12 @@ export default function AdminDashboard() {
   const [newTitle, setNewTitle] = useState('')
   const [creating, setCreating] = useState(false)
   const navigate = useNavigate()
+
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
 
   const loadGames = useCallback(async () => {
     try {
@@ -128,6 +137,27 @@ export default function AdminDashboard() {
                     <div className="text-xs text-agt-muted mt-1">
                       {game._count.problems} заданий · {game._count.teams} команд
                     </div>
+                    {game.scheduledAt && game.status === 'DRAFT' && (() => {
+                      const diff = Math.floor((new Date(game.scheduledAt!).getTime() - now) / 1000)
+                      const h = Math.floor(Math.abs(diff) / 3600)
+                      const m = Math.floor((Math.abs(diff) % 3600) / 60)
+                      const s = Math.abs(diff) % 60
+                      const timeStr = h > 0
+                        ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+                        : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+                      return (
+                        <div className="text-xs mt-1">
+                          <span className="text-agt-blue">
+                            🕐 {formatInTimezone(game.scheduledAt!, game.timezone)}
+                          </span>
+                          {diff > 0 ? (
+                            <span className="text-agt-orange ml-2 font-mono">−{timeStr}</span>
+                          ) : (
+                            <span className="text-agt-green ml-2">запускается...</span>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
                   <div className="flex gap-2 flex-shrink-0 flex-wrap justify-end">
                     {game.status === 'DRAFT' && <>

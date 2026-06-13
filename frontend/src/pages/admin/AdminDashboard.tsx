@@ -22,6 +22,8 @@ export default function AdminDashboard() {
   const [creating, setCreating] = useState(false)
   const navigate = useNavigate()
 
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000)
@@ -54,6 +56,15 @@ export default function AdminDashboard() {
     } finally {
       setCreating(false)
     }
+  }
+
+  async function renameGame(id: string) {
+    if (!editTitle.trim()) return
+    try {
+      await api.put(`/games/${id}`, { title: editTitle })
+      setGames(games.map(g => g.id === id ? { ...g, title: editTitle } : g))
+      setEditingId(null)
+    } catch { alert('Ошибка') }
   }
 
   async function startGame(id: string) {
@@ -127,7 +138,33 @@ export default function AdminDashboard() {
               <div key={game.id} className="card p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-agt-text truncate">{game.title}</div>
+                    {editingId === game.id ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          className="input text-sm py-1 px-2 flex-1"
+                          value={editTitle}
+                          onChange={e => setEditTitle(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') renameGame(game.id)
+                            if (e.key === 'Escape') setEditingId(null)
+                          }}
+                          autoFocus
+                        />
+                        <button onClick={() => renameGame(game.id)}
+                          className="text-xs text-agt-green hover:text-agt-text">✓</button>
+                        <button onClick={() => setEditingId(null)}
+                          className="text-xs text-agt-muted hover:text-agt-text">✕</button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 group">
+                        <div className="font-semibold text-agt-text truncate">{game.title}</div>
+                        <button
+                          onClick={() => { setEditingId(game.id); setEditTitle(game.title) }}
+                          className="text-agt-muted hover:text-agt-blue text-xs opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                          ✎
+                        </button>
+                      </div>
+                    )}
                     <div className="flex items-center gap-3 mt-1">
                       <span className={`text-xs font-medium ${statusColor[game.status]}`}>
                         ● {statusLabel[game.status]}

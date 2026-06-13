@@ -35,7 +35,6 @@ export async function gamesRoutes(app: FastifyInstance) {
       scoringType: z.enum(['BY_TIME', 'BY_TIPS', 'MIXED']).default('BY_TIME'),
       timezone: z.string().default('Europe/Moscow'),
       scheduledAt: z.string().optional(),
-      timezone: z.string().optional(),
     })
     const body = schema.safeParse(req.body)
     if (!body.success) return reply.status(400).send({ error: 'Invalid input' })

@@ -74,9 +74,10 @@ export default function AdminGameEdit() {
     try {
       const utcTime = scheduledAt ? localToUTC(scheduledAt, timezone) : null
       await api.put(`/games/${id}`, { timezone, scheduledAt: utcTime })
+      // Обновить game state вручную без перезагрузки
+      setGame(prev => prev ? { ...prev, timezone, scheduledAt: utcTime } : prev)
       setScheduleMsg('Сохранено!')
       setTimeout(() => setScheduleMsg(''), 3000)
-      loadGame()
     } catch { setScheduleMsg('Ошибка') }
     finally { setSavingSchedule(false) }
   }

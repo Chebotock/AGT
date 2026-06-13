@@ -187,7 +187,7 @@ export default function AdminGameEdit() {
         </div>
 
         {/* Автостарт */}
-        {game.status === 'DRAFT' && (
+        {game.status !== 'FINISHED' && (
           <div className="card p-4 mb-6">
             <div className="text-xs text-agt-muted uppercase tracking-wider mb-3">Автостарт</div>
             <div className="flex flex-col gap-3">

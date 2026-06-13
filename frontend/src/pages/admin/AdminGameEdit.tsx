@@ -95,7 +95,6 @@ export default function AdminGameEdit() {
       })
       setProblemText(''); setProblemAnswers('')
       setShowAddProblem(false)
-      loadGame()
     } catch { alert('Ошибка') } finally { setSaving(false) }
   }
 

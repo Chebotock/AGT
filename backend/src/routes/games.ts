@@ -88,6 +88,7 @@ export async function gamesRoutes(app: FastifyInstance) {
       wrongAnswerPenalty: z.number().optional(),
       maxTeams: z.number().optional(),
       scheduledAt: z.string().optional().nullable(),
+      timezone: z.string().optional(),
     })
     const body = schema.safeParse(req.body)
     if (!body.success) return reply.status(400).send({ error: 'Invalid input' })

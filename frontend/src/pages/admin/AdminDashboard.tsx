@@ -174,6 +174,8 @@ export default function AdminDashboard() {
                     <div className="text-xs text-agt-muted mt-1">
                       {game._count.problems} заданий · {game._count.teams} команд
                     </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
                     {game.scheduledAt && game.status === 'DRAFT' && (() => {
                       const diff = Math.floor((new Date(game.scheduledAt!).getTime() - now) / 1000)
                       const h = Math.floor(Math.abs(diff) / 3600)
@@ -183,20 +185,19 @@ export default function AdminDashboard() {
                         ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
                         : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
                       return (
-                        <div className="text-xs mt-1">
-                          <span className="text-agt-blue">
+                        <div className="text-right">
+                          <div className="text-xs text-agt-blue">
                             🕐 {formatInTimezone(game.scheduledAt!, game.timezone)}
-                          </span>
+                          </div>
                           {diff > 0 ? (
-                            <span className="text-agt-orange ml-2 font-mono">−{timeStr}</span>
+                            <div className="text-xs text-agt-orange font-mono">−{timeStr}</div>
                           ) : (
-                            <span className="text-agt-green ml-2">запускается...</span>
+                            <div className="text-xs text-agt-green">запускается...</div>
                           )}
                         </div>
                       )
                     })()}
-                  </div>
-                  <div className="flex gap-2 flex-shrink-0 flex-wrap justify-end">
+                    <div className="flex gap-2 flex-wrap justify-end">
                     {game.status === 'DRAFT' && <>
                       <button onClick={() => navigate(`/agt/adm/games/${game.id}`)}
                         className="btn-secondary text-xs px-3 py-1.5">Редактировать</button>
@@ -217,6 +218,7 @@ export default function AdminDashboard() {
                     </>}
                     <button onClick={() => deleteGame(game.id)}
                       className="text-agt-muted hover:text-agt-red text-xs px-2">✕</button>
+                    </div>
                   </div>
                 </div>
               </div>

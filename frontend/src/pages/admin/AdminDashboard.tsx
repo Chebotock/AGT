@@ -176,25 +176,6 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    {game.scheduledAt && game.status === 'DRAFT' && (() => {
-                      const diff = Math.floor((new Date(game.scheduledAt!).getTime() - now) / 1000)
-                      const h = Math.floor(Math.abs(diff) / 3600)
-                      const m = Math.floor((Math.abs(diff) % 3600) / 60)
-                      const s = Math.abs(diff) % 60
-                      const timeStr = h > 0
-                        ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-                        : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-                      return (
-                        <div className="text-xs text-right whitespace-nowrap">
-                          <span className="text-agt-blue">🕐 {formatInTimezone(game.scheduledAt!, game.timezone)}</span>
-                          {diff > 0 ? (
-                            <span className="text-agt-orange font-mono ml-1">−{timeStr}</span>
-                          ) : (
-                            <span className="text-agt-green ml-1">запускается...</span>
-                          )}
-                        </div>
-                      )
-                    })()}
                     <div className="flex gap-2 flex-wrap justify-end">
                     {game.status === 'DRAFT' && <>
                       <button onClick={() => navigate(`/agt/adm/games/${game.id}`)}
@@ -217,6 +198,25 @@ export default function AdminDashboard() {
                     <button onClick={() => deleteGame(game.id)}
                       className="text-agt-muted hover:text-agt-red text-xs px-2">✕</button>
                     </div>
+                    {game.scheduledAt && game.status === 'DRAFT' && (() => {
+                      const diff = Math.floor((new Date(game.scheduledAt!).getTime() - now) / 1000)
+                      const h = Math.floor(Math.abs(diff) / 3600)
+                      const m = Math.floor((Math.abs(diff) % 3600) / 60)
+                      const s = Math.abs(diff) % 60
+                      const timeStr = h > 0
+                        ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+                        : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+                      return (
+                        <div className="text-xs text-right whitespace-nowrap">
+                          <span className="text-agt-blue">🕐 {formatInTimezone(game.scheduledAt!, game.timezone)}</span>
+                          {diff > 0 ? (
+                            <span className="text-agt-orange font-mono ml-1">−{timeStr}</span>
+                          ) : (
+                            <span className="text-agt-green ml-1">запускается...</span>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
                 </div>
               </div>

@@ -33,7 +33,7 @@ export async function gamesRoutes(app: FastifyInstance) {
       wrongAnswerPenalty: z.number().default(600),
       maxTeams: z.number().optional(),
       scoringType: z.enum(['BY_TIME', 'BY_TIPS', 'MIXED']).default('BY_TIME'),
-      timezone: z.string().default('Europe/Moscow'),
+      timezone: z.string().default('Europe/Minsk'),
       scheduledAt: z.string().optional(),
     })
     const body = schema.safeParse(req.body)

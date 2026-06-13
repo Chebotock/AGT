@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../../api/client'
-import { TIMEZONES, formatInTimezone, localToUTC, getLocalDatetimeValue } from '../../utils/timezones'
+import { TIMEZONES, localToUTC, formatInTimezone } from '../../utils/timezones'
 
 interface Answer { id: string; answerText: string }
 interface Tip { id: string; type: number; text: string; delaySeconds: number; penaltySeconds: number }
@@ -12,29 +12,12 @@ interface Problem {
 interface Game {
   id: string; title: string; status: string; joinCode: string
   wrongAnswerPenalty: number; timezone: string; scheduledAt: string | null
-  problems: Problem[]; _count: { teams: number }
+  problems: Problem[]
+  _count: { teams: number }
 }
 
 const TIP_LABELS = ['', 'Лёгкая', 'Средняя', 'Полная']
 const TIP_COLORS = ['', 'text-agt-green', 'text-agt-orange', 'text-agt-red']
-
-const TIMEZONES = [
-  { value: 'Europe/Moscow',     label: 'Москва (UTC+3)' },
-  { value: 'Europe/Kaliningrad',label: 'Калининград (UTC+2)' },
-  { value: 'Europe/Samara',     label: 'Самара (UTC+4)' },
-  { value: 'Asia/Yekaterinburg',label: 'Екатеринбург (UTC+5)' },
-  { value: 'Asia/Omsk',         label: 'Омск (UTC+6)' },
-  { value: 'Asia/Krasnoyarsk',  label: 'Красноярск (UTC+7)' },
-  { value: 'Asia/Irkutsk',      label: 'Иркутск (UTC+8)' },
-  { value: 'Asia/Yakutsk',      label: 'Якутск (UTC+9)' },
-  { value: 'Asia/Vladivostok',  label: 'Владивосток (UTC+10)' },
-  { value: 'Asia/Magadan',      label: 'Магадан (UTC+11)' },
-  { value: 'Asia/Kamchatka',    label: 'Камчатка (UTC+12)' },
-  { value: 'Europe/Kiev',       label: 'Киев (UTC+2/3)' },
-  { value: 'Europe/Minsk',      label: 'Минск (UTC+3)' },
-  { value: 'Asia/Almaty',       label: 'Алматы (UTC+6)' },
-  { value: 'UTC',               label: 'UTC+0' },
-]
 
 export default function AdminGameEdit() {
   const { id } = useParams<{ id: string }>()
@@ -42,23 +25,19 @@ export default function AdminGameEdit() {
   const [game, setGame] = useState<Game | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Настройки игры
-  const [showSettings, setShowSettings] = useState(false)
-  const [timezone, setTimezone] = useState('Europe/Moscow')
-  const [scheduledAt, setScheduledAt] = useState('')
-  const [savingSettings, setSavingSettings] = useState(false)
-
-  // Форма задания
-  const [showAddProblem, setShowAddProblem] = useState(false)
-  const [problemText, setProblemText] = useState('')
-  const [problemAnswers, setProblemAnswers] = useState('')
-  const [saving, setSaving] = useState(false)
+  // Schedule
   const [timezone, setTimezone] = useState('Europe/Moscow')
   const [scheduledAt, setScheduledAt] = useState('')
   const [savingSchedule, setSavingSchedule] = useState(false)
   const [scheduleMsg, setScheduleMsg] = useState('')
 
-  // Форма подсказки
+  // Problem form
+  const [showAddProblem, setShowAddProblem] = useState(false)
+  const [problemText, setProblemText] = useState('')
+  const [problemAnswers, setProblemAnswers] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Tip form
   const [addingTipFor, setAddingTipFor] = useState<string | null>(null)
   const [tipText, setTipText] = useState('')
   const [tipDelay, setTipDelay] = useState(900)
@@ -79,31 +58,14 @@ export default function AdminGameEdit() {
           hour: '2-digit', minute: '2-digit',
         })
         setScheduledAt(fmt.format(new Date(data.scheduledAt)).replace(' ', 'T'))
-      }
-      setTimezone(data.timezone || 'Europe/Moscow')
-      if (data.scheduledAt) {
-        // Конвертировать UTC в локальный datetime-local формат
-        const d = new Date(data.scheduledAt)
-        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-        setScheduledAt(local.toISOString().slice(0, 16))
+      } else {
+        setScheduledAt('')
       }
     } catch {
       navigate('/agt/adm/dashboard')
     } finally {
       setLoading(false)
     }
-  }
-
-  async function saveSettings() {
-    setSavingSettings(true)
-    try {
-      await api.put(`/games/${id}`, {
-        timezone,
-        scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
-      })
-      setShowSettings(false)
-      loadGame()
-    } catch { alert('Ошибка сохранения') } finally { setSavingSettings(false) }
   }
 
   async function saveSchedule() {
@@ -115,7 +77,7 @@ export default function AdminGameEdit() {
       setScheduleMsg('Сохранено!')
       setTimeout(() => setScheduleMsg(''), 3000)
       loadGame()
-    } catch { setScheduleMsg('Ошибка сохранения') }
+    } catch { setScheduleMsg('Ошибка') }
     finally { setSavingSchedule(false) }
   }
 
@@ -125,11 +87,14 @@ export default function AdminGameEdit() {
     try {
       const answers = problemAnswers.split('\n').map(a => a.trim()).filter(Boolean)
       await api.post('/problems', {
-        gameId: id, orderNum: (game?.problems.length || 0) + 1,
-        text: problemText, answers,
+        gameId: id,
+        orderNum: (game?.problems.length || 0) + 1,
+        text: problemText,
+        answers,
       })
       setProblemText(''); setProblemAnswers('')
-      setShowAddProblem(false); loadGame()
+      setShowAddProblem(false)
+      loadGame()
     } catch { alert('Ошибка') } finally { setSaving(false) }
   }
 
@@ -142,11 +107,14 @@ export default function AdminGameEdit() {
     if (!typeToUse) { alert('Все подсказки уже добавлены'); setSavingTip(false); return }
     try {
       await api.post(`/problems/${problemId}/tips`, {
-        type: typeToUse, text: tipText,
-        delaySeconds: tipDelay, penaltySeconds: tipPenalty,
+        type: typeToUse,
+        text: tipText,
+        delaySeconds: tipDelay,
+        penaltySeconds: tipPenalty,
       })
       setTipText(''); setTipDelay(900); setTipPenalty(600)
-      setAddingTipFor(null); loadGame()
+      setAddingTipFor(null)
+      loadGame()
     } catch (e: any) {
       alert(e?.error || 'Ошибка')
     } finally { setSavingTip(false) }
@@ -154,27 +122,20 @@ export default function AdminGameEdit() {
 
   async function deleteProblem(problemId: string) {
     if (!confirm('Удалить задание?')) return
-    await api.delete(`/problems/${problemId}`); loadGame()
+    await api.delete(`/problems/${problemId}`)
+    loadGame()
   }
 
   async function startGame() {
-    if (!confirm(`Запустить игру "${game?.title}"?\nКод для команд: ${game?.joinCode}`)) return
-    await api.post(`/games/${id}/start`, {}); loadGame()
+    if (!confirm(`Запустить игру "${game?.title}"?\nКод: ${game?.joinCode}`)) return
+    await api.post(`/games/${id}/start`, {})
+    loadGame()
   }
 
   async function stopGame() {
     if (!confirm('Остановить игру?')) return
-    await api.post(`/games/${id}/stop`, {}); loadGame()
-  }
-
-  // Форматировать scheduledAt в читаемое время с учётом timezone
-  function formatScheduled(isoStr: string, tz: string): string {
-    try {
-      return new Date(isoStr).toLocaleString('ru-RU', {
-        timeZone: tz, day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      })
-    } catch { return isoStr }
+    await api.post(`/games/${id}/stop`, {})
+    loadGame()
   }
 
   if (loading) return (
@@ -183,8 +144,6 @@ export default function AdminGameEdit() {
     </div>
   )
   if (!game) return null
-
-  const tzLabel = TIMEZONES.find(t => t.value === game.timezone)?.label || game.timezone
 
   return (
     <div className="min-h-screen bg-agt-bg">
@@ -197,21 +156,20 @@ export default function AdminGameEdit() {
           <div className="text-xs text-agt-muted font-mono">{game.joinCode}</div>
         </div>
         {game.status === 'DRAFT' && (
-          <button onClick={() => setShowSettings(!showSettings)}
-            className="btn-secondary text-xs px-3 py-2">⚙</button>
-        )}
-        {game.status === 'DRAFT' && (
           <button onClick={startGame} className="btn-primary text-sm px-4 py-2">▶ Запустить</button>
         )}
         {game.status === 'ACTIVE' && (
           <button onClick={stopGame} className="btn-danger text-sm px-4 py-2">■ Стоп</button>
+        )}
+        {game.status === 'FINISHED' && (
+          <span className="text-xs text-agt-muted">Завершена</span>
         )}
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
 
         {/* Статистика */}
-        <div className="card p-4 mb-4">
+        <div className="card p-4 mb-6">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <div className="text-xl font-bold text-agt-blue">{game.problems.length}</div>
@@ -228,34 +186,18 @@ export default function AdminGameEdit() {
           </div>
         </div>
 
-        {/* Инфо о времени */}
-        <div className="card p-3 mb-4 flex items-center justify-between">
-          <div className="text-xs text-agt-muted">
-            🌍 {tzLabel}
-            {game.scheduledAt && (
-              <span className="ml-2 text-agt-orange">
-                · Автостарт: {formatScheduled(game.scheduledAt, game.timezone)}
-              </span>
-            )}
-            {!game.scheduledAt && game.status === 'DRAFT' && (
-              <span className="ml-2 text-agt-muted">· Автостарт не задан</span>
-            )}
-          </div>
-        </div>
-
-        {/* Настройки игры */}
-        {showSettings && game.status === 'DRAFT' && (
-          <div className="card p-4 mb-4">
-            <div className="text-sm font-medium text-agt-text mb-4">⚙ Настройки игры</div>
-            <div className="flex flex-col gap-4">
+        {/* Автостарт */}
+        {game.status === 'DRAFT' && (
+          <div className="card p-4 mb-6">
+            <div className="text-xs text-agt-muted uppercase tracking-wider mb-3">Автостарт</div>
+            <div className="flex flex-col gap-3">
               <div>
-                <label className="block text-xs text-agt-muted uppercase tracking-wider mb-1.5">
-                  Часовой пояс игры
-                </label>
+                <label className="block text-xs text-agt-muted mb-1.5">Часовой пояс</label>
                 <select
                   className="w-full bg-agt-element border border-agt-border rounded-md px-3 py-2.5
                              text-agt-text text-sm focus:outline-none focus:border-agt-blue"
-                  value={timezone} onChange={e => setTimezone(e.target.value)}
+                  value={timezone}
+                  onChange={e => setTimezone(e.target.value)}
                 >
                   {TIMEZONES.map(tz => (
                     <option key={tz.value} value={tz.value}>{tz.label}</option>
@@ -263,8 +205,8 @@ export default function AdminGameEdit() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-agt-muted uppercase tracking-wider mb-1.5">
-                  Автостарт (дата и время в выбранном часовом поясе)
+                <label className="block text-xs text-agt-muted mb-1.5">
+                  Дата и время старта (необязательно)
                 </label>
                 <input
                   type="datetime-local"
@@ -273,22 +215,29 @@ export default function AdminGameEdit() {
                   value={scheduledAt}
                   onChange={e => setScheduledAt(e.target.value)}
                 />
-                <div className="text-xs text-agt-muted mt-1">
-                  Оставьте пустым если хотите запустить вручную
-                </div>
+                {scheduledAt && (
+                  <div className="text-xs text-agt-muted mt-1">
+                    Игра стартует автоматически в указанное время
+                  </div>
+                )}
+                {game.scheduledAt && (
+                  <div className="text-xs text-agt-blue mt-1">
+                    Запланировано: {formatInTimezone(game.scheduledAt, timezone)}
+                  </div>
+                )}
               </div>
-              <div className="flex gap-2">
-                <button className="btn-primary text-sm" onClick={saveSettings} disabled={savingSettings}>
-                  {savingSettings ? 'Сохраняем...' : 'Сохранить'}
-                </button>
-                <button className="btn-secondary text-sm" onClick={() => setShowSettings(false)}>
-                  Отмена
+              <div className="flex items-center gap-3">
+                <button className="btn-primary text-sm" onClick={saveSchedule} disabled={savingSchedule}>
+                  {savingSchedule ? 'Сохраняем...' : 'Сохранить'}
                 </button>
                 {scheduledAt && (
-                  <button className="text-xs text-agt-red hover:text-agt-text ml-auto"
-                    onClick={() => { setScheduledAt(''); saveSettings() }}>
+                  <button className="text-xs text-agt-red hover:text-agt-text"
+                    onClick={() => { setScheduledAt('') }}>
                     Убрать автостарт
                   </button>
+                )}
+                {scheduleMsg && (
+                  <span className="text-xs text-agt-green">{scheduleMsg}</span>
                 )}
               </div>
             </div>
@@ -305,7 +254,6 @@ export default function AdminGameEdit() {
           )}
         </div>
 
-        {/* Форма добавления задания */}
         {showAddProblem && (
           <div className="card p-4 mb-4">
             <div className="text-sm font-medium text-agt-text mb-3">
@@ -345,7 +293,6 @@ export default function AdminGameEdit() {
           </div>
         )}
 
-        {/* Список заданий */}
         {game.problems.length === 0 ? (
           <div className="text-center py-10 text-agt-muted text-sm">
             Заданий пока нет — добавьте первое!
@@ -360,7 +307,8 @@ export default function AdminGameEdit() {
                     <div className="text-sm text-agt-text mb-2">{problem.text}</div>
                     <div className="flex flex-wrap gap-1">
                       {problem.answers.map(a => (
-                        <span key={a.id} className="text-xs bg-agt-element border border-agt-border
+                        <span key={a.id}
+                          className="text-xs bg-agt-element border border-agt-border
                                      text-agt-green rounded px-2 py-0.5 font-mono">
                           {a.answerText}
                         </span>
@@ -405,13 +353,6 @@ export default function AdminGameEdit() {
 
                   {addingTipFor === problem.id && (
                     <div className="bg-agt-element rounded-md p-3 mt-2">
-                      <div className="text-xs text-agt-muted mb-2">
-                        Следующий тип: <span className={TIP_COLORS[
-                          [1,2,3].filter(t => !problem.tips.find(tip => tip.type === t))[0] || 1
-                        ]}>
-                          {TIP_LABELS[[1,2,3].filter(t => !problem.tips.find(tip => tip.type === t))[0] || 1]}
-                        </span>
-                      </div>
                       <div className="grid grid-cols-2 gap-2 mb-3">
                         <div>
                           <label className="block text-xs text-agt-muted mb-1">Через (мин)</label>
@@ -448,7 +389,9 @@ export default function AdminGameEdit() {
                           {savingTip ? '...' : 'Сохранить'}
                         </button>
                         <button className="btn-secondary text-xs py-1.5 px-3"
-                          onClick={() => setAddingTipFor(null)}>Отмена</button>
+                          onClick={() => setAddingTipFor(null)}>
+                          Отмена
+                        </button>
                       </div>
                     </div>
                   )}

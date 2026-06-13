@@ -64,7 +64,7 @@ export class AuthService {
     // Найти активную команду
     const team = await prisma.team.findFirst({
       where: { captainId: captain.id },
-      include: { game: true },
+      include: { game: { select: { id: true, title: true, status: true, timezone: true, scheduledAt: true } } },
       orderBy: { createdAt: 'desc' }
     })
 
@@ -119,7 +119,7 @@ export class AuthService {
 
     const team = await prisma.team.findFirst({
       where: { captainId: captain.id },
-      include: { game: true },
+      include: { game: { select: { id: true, title: true, status: true, timezone: true, scheduledAt: true } } },
       orderBy: { createdAt: 'desc' }
     })
 
@@ -131,6 +131,8 @@ export class AuthService {
         gameId: team.gameId,
         gameTitle: team.game.title,
         gameStatus: team.game.status,
+        gameTimezone: team.game.timezone,
+        gameScheduledAt: team.game.scheduledAt,
       } : null
     }
   }

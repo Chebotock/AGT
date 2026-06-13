@@ -11,7 +11,7 @@ export const TIMEZONES = [
   { value: 'Asia/Magadan',      label: 'Магадан (UTC+11)' },
   { value: 'Asia/Kamchatka',    label: 'Камчатка (UTC+12)' },
   { value: 'Europe/Kiev',       label: 'Киев (UTC+2)' },
-  { value: 'Europe/Minsk',      label: 'Минск (UTC+3)' },
+  { value: 'Europe/Minsk',      label: 'Брест (UTC+3)' },
   { value: 'Asia/Almaty',       label: 'Алматы (UTC+6)' },
   { value: 'Asia/Tashkent',     label: 'Ташкент (UTC+5)' },
   { value: 'UTC',               label: 'UTC (UTC+0)' },

@@ -207,13 +207,13 @@ export default function AdminDashboard() {
                         ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
                         : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
                       return (
-                        <div className="text-xs text-right whitespace-nowrap">
-                          <span className="text-agt-blue">🕐 {formatInTimezone(game.scheduledAt!, game.timezone)}</span>
+                        <div className="text-xs text-right whitespace-nowrap pr-2 mt-1">
                           {diff > 0 ? (
-                            <span className="text-agt-orange font-mono ml-1">−{timeStr}</span>
+                            <span className="text-agt-orange font-mono">−{timeStr}</span>
                           ) : (
-                            <span className="text-agt-green ml-1">запускается...</span>
+                            <span className="text-agt-green">запускается...</span>
                           )}
+                          <span className="text-agt-blue ml-2">🕐 {formatInTimezone(game.scheduledAt!, game.timezone)}</span>
                         </div>
                       )
                     })()}

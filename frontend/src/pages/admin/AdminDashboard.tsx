@@ -14,21 +14,28 @@ interface Game {
   _count: { teams: number; problems: number }
 }
 
+function formatCountdown(diff: number): string {
+  const abs = Math.abs(diff)
+  const days = Math.floor(abs / 86400)
+  const hours = Math.floor((abs % 86400) / 3600)
+  const mins = Math.floor((abs % 3600) / 60)
+  return [
+    days > 0 ? `${days} дн` : '',
+    hours > 0 ? `${hours} ч` : '',
+    `${mins} мин`
+  ].filter(Boolean).join(' ')
+}
+
 export default function AdminDashboard() {
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [creating, setCreating] = useState(false)
-  const navigate = useNavigate()
-
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [now, setNow] = useState(Date.now())
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(t)
-  }, [])
+  const navigate = useNavigate()
 
   const loadGames = useCallback(async () => {
     try {
@@ -42,6 +49,8 @@ export default function AdminDashboard() {
   }, [navigate])
 
   useEffect(() => { loadGames() }, [loadGames])
+  useEffect(() => { const t = setInterval(loadGames, 30000); return () => clearInterval(t) }, [loadGames])
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t) }, [])
 
   async function createGame() {
     if (!newTitle.trim()) return
@@ -134,120 +143,101 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {games.map(game => (
-              <div key={game.id} className="card p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    {editingId === game.id ? (
-                      <div className="flex items-center gap-2">
-                        <input
-                          className="input text-sm py-1 px-2 flex-1"
-                          value={editTitle}
-                          onChange={e => setEditTitle(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') renameGame(game.id)
-                            if (e.key === 'Escape') setEditingId(null)
-                          }}
-                          autoFocus
-                        />
-                        <button onClick={() => renameGame(game.id)}
-                          className="text-xs text-agt-green hover:text-agt-text">✓</button>
-                        <button onClick={() => setEditingId(null)}
-                          className="text-xs text-agt-muted hover:text-agt-text">✕</button>
+            {games.map(game => {
+              const diff = game.scheduledAt
+                ? Math.floor((new Date(game.scheduledAt).getTime() - now) / 1000)
+                : null
+
+              return (
+                <div key={game.id} className="card p-4">
+                  {/* Верхняя часть */}
+                  <div className="flex items-start justify-between gap-3">
+                    {/* Левая колонка */}
+                    <div className="flex-1 min-w-0">
+                      {editingId === game.id ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            className="input text-sm py-1 px-2 flex-1"
+                            value={editTitle}
+                            onChange={e => setEditTitle(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') renameGame(game.id)
+                              if (e.key === 'Escape') setEditingId(null)
+                            }}
+                            autoFocus
+                          />
+                          <button onClick={() => renameGame(game.id)}
+                            className="text-xs text-agt-green hover:text-agt-text">✓</button>
+                          <button onClick={() => setEditingId(null)}
+                            className="text-xs text-agt-muted hover:text-agt-text">✕</button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 group">
+                          <div className="font-semibold text-agt-text truncate">{game.title}</div>
+                          <button
+                            onClick={() => { setEditingId(game.id); setEditTitle(game.title) }}
+                            className="text-agt-muted hover:text-agt-blue text-xs opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                            ✎
+                          </button>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className={`text-xs font-medium ${statusColor[game.status]}`}>
+                          ● {statusLabel[game.status]}
+                        </span>
+                        <span className="text-xs text-agt-muted font-mono">{game.joinCode}</span>
                       </div>
-                    ) : (
-                      <div className="flex items-center gap-2 group">
-                        <div className="font-semibold text-agt-text truncate">{game.title}</div>
-                        <button
-                          onClick={() => { setEditingId(game.id); setEditTitle(game.title) }}
-                          className="text-agt-muted hover:text-agt-blue text-xs opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                          ✎
-                        </button>
+                      <div className="text-xs text-agt-muted mt-1">
+                        {game._count.problems} заданий · {game._count.teams} команд
                       </div>
-                    )}
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className={`text-xs font-medium ${statusColor[game.status]}`}>
-                        ● {statusLabel[game.status]}
-                      </span>
-                      <span className="text-xs text-agt-muted font-mono">{game.joinCode}</span>
                     </div>
-                    <div className="text-xs text-agt-muted mt-1">
-                      {game._count.problems} заданий · {game._count.teams} команд
+
+                    {/* Правая колонка — кнопки */}
+                    <div className="flex gap-2 flex-shrink-0 flex-wrap justify-end">
+                      {game.status === 'DRAFT' && <>
+                        <button onClick={() => navigate(`/agt/adm/games/${game.id}`)}
+                          className="btn-secondary text-xs px-3 py-1.5">Редактировать</button>
+                        <button onClick={() => startGame(game.id)}
+                          className="btn-primary text-xs px-3 py-1.5">▶ Запустить</button>
+                      </>}
+                      {game.status === 'ACTIVE' && <>
+                        <button onClick={() => navigate(`/agt/adm/dashboard/${game.id}`)}
+                          className="btn-secondary text-xs px-3 py-1.5">📊 Дашборд</button>
+                        <button onClick={() => navigate(`/agt/adm/games/${game.id}`)}
+                          className="btn-secondary text-xs px-3 py-1.5">Игра</button>
+                        <button onClick={() => stopGame(game.id)}
+                          className="btn-danger text-xs px-3 py-1.5">■ Стоп</button>
+                      </>}
+                      {game.status === 'FINISHED' && <>
+                        <button onClick={() => navigate(`/agt/adm/dashboard/${game.id}`)}
+                          className="btn-secondary text-xs px-3 py-1.5">📊 Результаты</button>
+                      </>}
+                      <button onClick={() => deleteGame(game.id)}
+                        className="text-agt-muted hover:text-agt-red text-xs px-2">✕</button>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    <div className="flex gap-2 flex-wrap justify-end">
-                    {game.status === 'DRAFT' && <>
-                      <button onClick={() => navigate(`/agt/adm/games/${game.id}`)}
-                        className="btn-secondary text-xs px-3 py-1.5">Редактировать</button>
-                      <button onClick={() => startGame(game.id)}
-                        className="btn-primary text-xs px-3 py-1.5">▶ Запустить</button>
-                    </>}
-                    {game.status === 'ACTIVE' && <>
-                      <button onClick={() => navigate(`/agt/adm/dashboard/${game.id}`)}
-                        className="btn-secondary text-xs px-3 py-1.5">📊 Дашборд</button>
-                      <button onClick={() => navigate(`/agt/adm/games/${game.id}`)}
-                        className="btn-secondary text-xs px-3 py-1.5">Игра</button>
-                      <button onClick={() => stopGame(game.id)}
-                        className="btn-danger text-xs px-3 py-1.5">■ Стоп</button>
-                    </>}
-                    {game.status === 'FINISHED' && <>
-                      <button onClick={() => navigate(`/agt/adm/dashboard/${game.id}`)}
-                        className="btn-secondary text-xs px-3 py-1.5">📊 Результаты</button>
-                    </>}
-                    <button onClick={() => deleteGame(game.id)}
-                      className="text-agt-muted hover:text-agt-red text-xs px-2">✕</button>
-                    </div>
-                    {game.scheduledAt && game.status === 'DRAFT' && (() => {
-                      const diff = Math.floor((new Date(game.scheduledAt!).getTime() - now) / 1000)
-                      const h = Math.floor(Math.abs(diff) / 3600)
-                      const m = Math.floor((Math.abs(diff) % 3600) / 60)
-                      const s = Math.abs(diff) % 60
-                      const timeStr = h > 0
-                        ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-                        : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-                      const days = Math.floor(Math.abs(diff) / 86400)
-                      const hours = Math.floor((Math.abs(diff) % 86400) / 3600)
-                      const mins = Math.floor((Math.abs(diff) % 3600) / 60)
-                      const countdownStr = diff > 0
-                        ? [
-                            days > 0 ? `${days} дн` : '',
-                            hours > 0 ? `${hours} ч` : '',
-                            `${mins} мин`
-                          ].filter(Boolean).join(' ')
-                        : null
-                      return null
-                    })()}
-                  </div>
-                </div>
-                {game.scheduledAt && game.status === 'DRAFT' && (() => {
-                  const diff2 = Math.floor((new Date(game.scheduledAt!).getTime() - now) / 1000)
-                  const days2 = Math.floor(Math.abs(diff2) / 86400)
-                  const hours2 = Math.floor((Math.abs(diff2) % 86400) / 3600)
-                  const mins2 = Math.floor((Math.abs(diff2) % 3600) / 60)
-                  const countdownStr2 = diff2 > 0
-                    ? [
-                        days2 > 0 ? `${days2} дн` : '',
-                        hours2 > 0 ? `${hours2} ч` : '',
-                        `${mins2} мин`
-                      ].filter(Boolean).join(' ')
-                    : null
-                  return (
-                    <div className="border-t border-agt-border mt-3 pt-2 px-1 flex items-center justify-between">
+
+                  {/* Нижняя полоска — время автостарта */}
+                  {game.scheduledAt && game.status === 'DRAFT' && diff !== null && (
+                    <div className="border-t border-agt-border mt-3 pt-2 flex items-center justify-between">
                       <span className="text-xs text-agt-muted">
-                        {diff2 > 0
-                          ? <><span className="text-agt-text">Старт через:</span> <span className="text-agt-orange font-medium">{countdownStr2}</span></>
-                          : <span className="text-agt-green">Запускается...</span>
-                        }
+                        {diff > 0 ? (
+                          <>
+                            <span className="text-agt-text">Старт через: </span>
+                            <span className="text-agt-orange font-medium">{formatCountdown(diff)}</span>
+                          </>
+                        ) : (
+                          <span className="text-agt-green">Запускается...</span>
+                        )}
                       </span>
                       <span className="text-xs text-agt-blue">
-                        🕐 {formatInTimezone(game.scheduledAt!, game.timezone)}
+                        🕐 {formatInTimezone(game.scheduledAt, game.timezone)}
                       </span>
                     </div>
-                  )
-                })()}
-              </div>
-            ))}
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>

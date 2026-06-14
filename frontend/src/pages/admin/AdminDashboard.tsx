@@ -19,12 +19,10 @@ function formatCountdown(diff: number): string {
   const days = Math.floor(abs / 86400)
   const hours = Math.floor((abs % 86400) / 3600)
   const mins = Math.floor((abs % 3600) / 60)
-  const secs = abs % 60
   return [
     days > 0 ? `${days} дн` : '',
     hours > 0 ? `${hours} ч` : '',
-    `${mins} мин`,
-    `${secs} сек`
+    `${mins} мин`
   ].filter(Boolean).join(' ')
 }
 
@@ -102,8 +100,8 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-agt-bg">
       <div className="bg-agt-surface border-b border-agt-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-baseline gap-2">
-          <span className="text-xl font-extrabold text-agt-blue tracking-widest">AGT</span>
-          <span className="text-xs font-bold text-agt-red tracking-widest">PROJECT 911</span>
+          <span className="text-xs font-bold text-agt-blue tracking-widest">PROJECT 911</span>
+          <span className="text-xl font-extrabold text-agt-red tracking-widest">AGT</span>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/agt/adm/profile')}
@@ -232,7 +230,7 @@ export default function AdminDashboard() {
                           <span className="text-agt-green">Запускается...</span>
                         )}
                       </span>
-                      <span className="text-xs text-agt-muted">
+                      <span className="text-xs text-agt-blue">
                         🕐 {formatInTimezone(game.scheduledAt, game.timezone)}
                       </span>
                     </div>

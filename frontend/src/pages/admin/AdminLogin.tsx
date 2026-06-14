@@ -27,8 +27,8 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-agt-bg flex flex-col items-center justify-center px-4">
 
       <div className="text-center mb-10">
-        <div className="text-5xl font-extrabold text-agt-blue tracking-widest">AGT</div>
-        <div className="text-sm font-bold text-agt-red tracking-[0.2em] mt-1">PROJECT 911</div>
+        <div className="text-sm font-bold text-agt-blue tracking-[0.2em] mb-1">PROJECT 911</div>
+        <div className="text-5xl font-extrabold text-agt-red tracking-widest">AGT</div>
         <div className="text-agt-muted text-xs mt-3 tracking-widest uppercase">Панель организатора</div>
       </div>
 

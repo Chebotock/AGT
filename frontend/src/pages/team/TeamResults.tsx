@@ -65,8 +65,8 @@ export default function TeamResults() {
 
       {/* Хедер */}
       <div className="bg-agt-surface border-b border-agt-border px-4 py-3 text-center">
-        <div className="text-xs font-bold text-agt-red tracking-widest mb-0.5">PROJECT 911</div>
-        <div className="text-lg font-extrabold text-agt-blue">{data.game.title}</div>
+        <div className="text-xs font-bold text-agt-blue tracking-widest mb-0.5">PROJECT 911</div>
+        <div className="text-lg font-extrabold text-agt-red">{data.game.title}</div>
         <div className="text-xs text-agt-muted mt-0.5">
           {data.game.status === 'FINISHED' ? 'Игра завершена' : 'Итоги'}
         </div>

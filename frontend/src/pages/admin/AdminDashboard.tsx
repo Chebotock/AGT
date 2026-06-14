@@ -206,18 +206,46 @@ export default function AdminDashboard() {
                       const timeStr = h > 0
                         ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
                         : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-                      return (
-                        <div className="text-xs text-right whitespace-nowrap pr-2 mt-1">
-                          {diff > 0 ? (
-                            <span className="text-agt-orange font-mono">−{timeStr}</span>
-                          ) : (
-                            <span className="text-agt-green">запускается...</span>
-                          )}
-                          <span className="text-agt-blue ml-2">🕐 {formatInTimezone(game.scheduledAt!, game.timezone)}</span>
-                        </div>
-                      )
+                      const days = Math.floor(Math.abs(diff) / 86400)
+                      const hours = Math.floor((Math.abs(diff) % 86400) / 3600)
+                      const mins = Math.floor((Math.abs(diff) % 3600) / 60)
+                      const countdownStr = diff > 0
+                        ? [
+                            days > 0 ? `${days} дн` : '',
+                            hours > 0 ? `${hours} ч` : '',
+                            `${mins} мин`
+                          ].filter(Boolean).join(' ')
+                        : null
+                      return null
                     })()}
                   </div>
+                </div>
+                {game.scheduledAt && game.status === 'DRAFT' && (() => {
+                  const diff2 = Math.floor((new Date(game.scheduledAt!).getTime() - now) / 1000)
+                  const days2 = Math.floor(Math.abs(diff2) / 86400)
+                  const hours2 = Math.floor((Math.abs(diff2) % 86400) / 3600)
+                  const mins2 = Math.floor((Math.abs(diff2) % 3600) / 60)
+                  const countdownStr2 = diff2 > 0
+                    ? [
+                        days2 > 0 ? `${days2} дн` : '',
+                        hours2 > 0 ? `${hours2} ч` : '',
+                        `${mins2} мин`
+                      ].filter(Boolean).join(' ')
+                    : null
+                  return (
+                    <div className="border-t border-agt-border mt-3 pt-2 px-1 flex items-center justify-between">
+                      <span className="text-xs text-agt-muted">
+                        {diff2 > 0
+                          ? <><span className="text-agt-text">Старт через:</span> <span className="text-agt-orange font-medium">{countdownStr2}</span></>
+                          : <span className="text-agt-green">Запускается...</span>
+                        }
+                      </span>
+                      <span className="text-xs text-agt-blue">
+                        🕐 {formatInTimezone(game.scheduledAt!, game.timezone)}
+                      </span>
+                    </div>
+                  )
+                })()}
                 </div>
               </div>
             ))}

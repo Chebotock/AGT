@@ -24,7 +24,7 @@ function formatCountdown(diff: number): string {
     days > 0 ? `${days} дн` : '',
     hours > 0 ? `${hours} ч` : '',
     `${mins} мин`,
-    `${secs} сек`
+    `${String(secs).padStart(2, '0')} сек`
   ].filter(Boolean).join(' ')
 }
 

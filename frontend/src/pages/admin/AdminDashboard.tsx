@@ -19,10 +19,12 @@ function formatCountdown(diff: number): string {
   const days = Math.floor(abs / 86400)
   const hours = Math.floor((abs % 86400) / 3600)
   const mins = Math.floor((abs % 3600) / 60)
+  const secs = abs % 60
   return [
     days > 0 ? `${days} дн` : '',
     hours > 0 ? `${hours} ч` : '',
-    `${mins} мин`
+    `${mins} мин`,
+    `${secs} сек`
   ].filter(Boolean).join(' ')
 }
 

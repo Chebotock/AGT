@@ -22,9 +22,9 @@ function formatCountdown(diff: number): string {
   const secs = abs % 60
   return [
     days > 0 ? `${days} дн` : '',
-    hours > 0 ? `${hours} ч` : '',
-    `${mins} мин`,
-    `${String(secs).padStart(2, '0')} сек`
+    hours > 0 ? `${hours} :` : '',
+    `${mins}:`,
+    `${String(secs).padStart(2, '0')} `
   ].filter(Boolean).join(' ')
 }
 
